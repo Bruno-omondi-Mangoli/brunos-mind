@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Footer from "@/components/Footer";
+import Nav from "@/components/Nav";
 import AuthBootstrap from "@/components/AuthBootstrap";
 
 export const metadata: Metadata = {
@@ -14,6 +15,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body className="flex min-h-screen flex-col bg-black text-white antialiased">
         <AuthBootstrap />
+        <Nav />
         <main className="flex-1">{children}</main>
         <Footer />
       </body>
