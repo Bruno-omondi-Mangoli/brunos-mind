@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useProfile } from "@/lib/useProfile";
@@ -13,6 +14,8 @@ type Question = {
   stem: string;
   options: QuizOption[];
   difficulty: number;
+  reviewed: boolean;
+  ai_checked: boolean;
 };
 type Concept = { id: string; title: string; skill_area_id: string };
 type Area = { id: string; title: string; sort_order: number };
@@ -25,12 +28,20 @@ type Explanation = {
   exam: string;
 };
 type Level = "analogy" | "plain" | "exam";
+type Mode = "mixed" | "weak";
+type Opts = { area: string; concept: string; size: number; mode: Mode };
 
 const LEVEL_LABEL: Record<Level, string> = {
   analogy: "Analogy",
   plain: "Plain",
   exam: "Exam wording",
 };
+
+const SIZES: { label: string; value: number }[] = [
+  { label: "10 questions", value: 10 },
+  { label: "20 questions", value: 20 },
+  { label: "All", value: 0 },
+];
 
 const TORN =
   "polygon(0 4%, 6% 0, 14% 3%, 22% 0, 31% 4%, 40% 1%, 50% 4%, 60% 0, 70% 3%, 80% 0, 90% 4%, 100% 1%, 100% 100%, 0 100%)";
@@ -44,10 +55,42 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-function buildDeck(questions: Question[], concepts: Concept[], area: string): Question[] {
+function badge(q: Question): string {
+  if (q.reviewed) return "Human reviewed";
+  if (q.ai_checked) return "AI checked";
+  return "Not yet reviewed";
+}
+
+async function loadWeakScores(userId: string): Promise<Map<string, number>> {
+  const { data } = await createClient()
+    .from("card_states")
+    .select("concept_id, box, lapses")
+    .eq("user_id", userId);
+  const m = new Map<string, number>();
+  (data ?? []).forEach((r) => {
+    m.set(r.concept_id as string, (r.lapses as number) * 2 + (6 - (r.box as number)));
+  });
+  return m;
+}
+
+function buildDeck(
+  questions: Question[],
+  concepts: Concept[],
+  o: Opts,
+  weak: Map<string, number> | null
+): Question[] {
   const areaOf = new Map(concepts.map((c) => [c.id, c.skill_area_id]));
-  const list = questions.filter((q) => area === "all" || areaOf.get(q.concept_id) === area);
-  return shuffle(list).map((q) => ({ ...q, options: shuffle(q.options) }));
+  const list = questions.filter(
+    (q) =>
+      (o.area === "all" || areaOf.get(q.concept_id) === o.area) &&
+      (o.concept === "all" || q.concept_id === o.concept)
+  );
+  let deck = shuffle(list);
+  if (o.mode === "weak" && weak && weak.size > 0) {
+    deck = deck.sort((a, b) => (weak.get(b.concept_id) ?? 3) - (weak.get(a.concept_id) ?? 3));
+  }
+  if (o.size > 0) deck = deck.slice(0, o.size);
+  return shuffle(deck).map((q) => ({ ...q, options: shuffle(q.options) }));
 }
 
 function pickExplanation(
@@ -78,7 +121,8 @@ export default function QuizPage() {
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState("");
 
-  const [area, setArea] = useState("all");
+  const [opts, setOpts] = useState<Opts>({ area: "all", concept: "all", size: 10, mode: "mixed" });
+  const [round, setRound] = useState(0);
   const [index, setIndex] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [level, setLevel] = useState<Level>("plain");
@@ -93,8 +137,10 @@ export default function QuizPage() {
     async function load() {
       const supabase = createClient();
       const [qs, cs, ar, es] = await Promise.all([
-        supabase.from("questions").select("id, concept_id, stem, options, difficulty"),
-        supabase.from("concepts").select("id, title, skill_area_id"),
+        supabase
+          .from("questions")
+          .select("id, concept_id, stem, options, difficulty, reviewed, ai_checked"),
+        supabase.from("concepts").select("id, title, skill_area_id").order("sort_order"),
         supabase.from("skill_areas").select("id, title, sort_order").order("sort_order"),
         supabase
           .from("concept_explanations")
@@ -106,13 +152,10 @@ export default function QuizPage() {
         setLoadError(err.message);
         return;
       }
-      const qList = (qs.data ?? []) as Question[];
-      const cList = (cs.data ?? []) as Concept[];
-      setQuestions(qList);
-      setConcepts(cList);
+      setQuestions((qs.data ?? []) as Question[]);
+      setConcepts((cs.data ?? []) as Concept[]);
       setAreas((ar.data ?? []) as Area[]);
       setExplanations((es.data ?? []) as Explanation[]);
-      setDeck(buildDeck(qList, cList, "all"));
       setLoaded(true);
     }
     load();
@@ -120,6 +163,26 @@ export default function QuizPage() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (!loaded || !ready) return;
+    let cancelled = false;
+    async function start() {
+      let weak: Map<string, number> | null = null;
+      if (opts.mode === "weak" && userId) weak = await loadWeakScores(userId);
+      if (cancelled) return;
+      setDeck(buildDeck(questions, concepts, opts, weak));
+      setIndex(0);
+      setSelectedId(null);
+      setScore(0);
+      setMissed([]);
+      setSaveNote("");
+    }
+    start();
+    return () => {
+      cancelled = true;
+    };
+  }, [loaded, ready, opts, round, questions, concepts, userId]);
 
   const q = deck[index];
 
@@ -197,16 +260,6 @@ export default function QuizPage() {
     setSaveNote("");
   }
 
-  function restart(nextArea: string) {
-    setArea(nextArea);
-    setDeck(buildDeck(questions, concepts, nextArea));
-    setIndex(0);
-    setSelectedId(null);
-    setScore(0);
-    setMissed([]);
-    setSaveNote("");
-  }
-
   const conceptTitle = (id: string) => concepts.find((c) => c.id === id)?.title ?? id;
   const areaTitle = (conceptId: string) => {
     const c = concepts.find((x) => x.id === conceptId);
@@ -220,9 +273,21 @@ export default function QuizPage() {
     return <p className="p-8 text-white/60">Loading questions...</p>;
   }
 
+  const conceptsWithQuestions = new Set(questions.map((x) => x.concept_id));
+  const conceptChoices = concepts.filter(
+    (c) =>
+      conceptsWithQuestions.has(c.id) && (opts.area === "all" || c.skill_area_id === opts.area)
+  );
+
   const finished = deck.length > 0 && index >= deck.length;
   const picked = q ? pickExplanation(explanations, q.concept_id, worldId, lang) : null;
   const uniqueMissed = Array.from(new Set(missed));
+
+  const chip = (active: boolean) =>
+    "rounded border px-3 py-1 " +
+    (active
+      ? "border-cyan-300 bg-cyan-300 text-black"
+      : "border-white/20 text-white/70 hover:bg-white/10");
 
   return (
     <section className="mx-auto max-w-2xl px-6 py-10">
@@ -236,21 +301,69 @@ export default function QuizPage() {
           <button
             key={a.id}
             type="button"
-            aria-pressed={area === a.id}
-            onClick={() => restart(a.id)}
-            className={
-              "rounded border px-3 py-1 " +
-              (area === a.id
-                ? "border-cyan-300 bg-cyan-300 text-black"
-                : "border-white/20 text-white/70 hover:bg-white/10")
-            }
+            aria-pressed={opts.area === a.id}
+            onClick={() => setOpts((o) => ({ ...o, area: a.id, concept: "all" }))}
+            className={chip(opts.area === a.id)}
           >
             {a.title}
           </button>
         ))}
       </div>
 
-      {deck.length === 0 && <p className="mt-8 text-white/60">No questions for this topic yet.</p>}
+      <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
+        <label htmlFor="conceptFilter" className="text-white/60">
+          Concept
+        </label>
+        <select
+          id="conceptFilter"
+          value={opts.concept}
+          onChange={(e) => setOpts((o) => ({ ...o, concept: e.target.value }))}
+          className="max-w-full rounded border border-white/20 bg-black px-3 py-1"
+        >
+          <option value="all">All concepts</option>
+          {conceptChoices.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.title}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="mt-3 flex flex-wrap gap-2 text-sm">
+        <div role="group" aria-label="Round size" className="flex gap-2">
+          {SIZES.map((s) => (
+            <button
+              key={s.value}
+              type="button"
+              aria-pressed={opts.size === s.value}
+              onClick={() => setOpts((o) => ({ ...o, size: s.value }))}
+              className={chip(opts.size === s.value)}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+        <div role="group" aria-label="Question order" className="flex gap-2">
+          <button
+            type="button"
+            aria-pressed={opts.mode === "mixed"}
+            onClick={() => setOpts((o) => ({ ...o, mode: "mixed" }))}
+            className={chip(opts.mode === "mixed")}
+          >
+            Mixed
+          </button>
+          <button
+            type="button"
+            aria-pressed={opts.mode === "weak"}
+            onClick={() => setOpts((o) => ({ ...o, mode: "weak" }))}
+            className={chip(opts.mode === "weak")}
+          >
+            My weak spots
+          </button>
+        </div>
+      </div>
+
+      {deck.length === 0 && <p className="mt-8 text-white/60">No questions for this choice yet.</p>}
 
       {q && !finished && (
         <div className="mt-8">
@@ -260,8 +373,9 @@ export default function QuizPage() {
             </span>
             <span>Score {score}</span>
           </div>
-          <p className="mb-2 text-sm text-white/50">
-            {selectedId ? conceptTitle(q.concept_id) : areaTitle(q.concept_id)}
+          <p className="mb-2 flex flex-wrap justify-between gap-2 text-sm text-white/50">
+            <span>{selectedId ? conceptTitle(q.concept_id) : areaTitle(q.concept_id)}</span>
+            <span className="font-mono text-xs uppercase tracking-widest">{badge(q)}</span>
           </p>
 
           <GlassQuizCard
@@ -310,7 +424,7 @@ export default function QuizPage() {
           )}
 
           {selectedId && (
-            <div className="mt-6 flex items-center gap-4">
+            <div className="mt-6 flex flex-wrap items-center gap-4">
               <button
                 ref={nextRef}
                 type="button"
@@ -319,6 +433,12 @@ export default function QuizPage() {
               >
                 {index + 1 >= deck.length ? "See results" : "Next question"}
               </button>
+              <Link
+                href={`/analogy/${q.concept_id}`}
+                className="text-sm text-cyan-300 hover:underline"
+              >
+                Read the study note
+              </Link>
               {saveNote && <span className="text-xs text-amber-300">{saveNote}</span>}
             </div>
           )}
@@ -338,7 +458,11 @@ export default function QuizPage() {
               <p className="mt-4 text-sm text-white/70">Concepts to revisit:</p>
               <ul className="mt-2 list-disc pl-6 text-sm">
                 {uniqueMissed.map((id) => (
-                  <li key={id}>{conceptTitle(id)}</li>
+                  <li key={id}>
+                    <Link href={`/analogy/${id}`} className="text-cyan-300 hover:underline">
+                      {conceptTitle(id)}
+                    </Link>
+                  </li>
                 ))}
               </ul>
             </>
@@ -347,10 +471,10 @@ export default function QuizPage() {
           )}
           <button
             type="button"
-            onClick={() => restart(area)}
+            onClick={() => setRound((r) => r + 1)}
             className="mt-6 rounded bg-cyan-400 px-5 py-2 text-sm font-semibold text-black"
           >
-            Play again
+            New round
           </button>
         </div>
       )}
