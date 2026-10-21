@@ -3,7 +3,7 @@ import PowerToggle from "@/components/PowerToggle";
 
 const LINKS = [
   { href: "/", label: "Home" },
-  { href: "/analogy", label: "Analogies" },
+  { href: "/learn", label: "Learn" },
   { href: "/buddy", label: "Study Buddy" },
   { href: "/quiz", label: "Quiz" },
   { href: "/flashcards", label: "Flashcards" },
@@ -11,6 +11,7 @@ const LINKS = [
   { href: "/dashboard", label: "Readiness" },
   { href: "/diagnose", label: "Find my gaps" },
   { href: "/planner", label: "Planner" },
+  { href: "/analogy", label: "All analogies" },
   { href: "/status", label: "Status" },
 ];
 

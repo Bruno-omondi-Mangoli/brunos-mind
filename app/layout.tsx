@@ -5,7 +5,6 @@ import Nav from "@/components/Nav";
 import AuthBootstrap from "@/components/AuthBootstrap";
 import VisualsProvider from "@/components/VisualsProvider";
 import NeuralBackground from "@/components/NeuralBackground";
-import LiveWords from "@/components/LiveWords";
 
 export const metadata: Metadata = {
   title: "Bruno's Mind | Unofficial AZ-900 Prep",
@@ -20,7 +19,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <AuthBootstrap />
         <VisualsProvider>
           <NeuralBackground />
-          <LiveWords />
           <Nav />
           <main className="flex-1">{children}</main>
           <Footer />
