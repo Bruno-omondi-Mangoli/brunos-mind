@@ -1,4 +1,5 @@
 import Link from "next/link";
+import PowerToggle from "@/components/PowerToggle";
 
 const LINKS = [
   { href: "/", label: "Home" },
@@ -25,6 +26,7 @@ export default function Nav() {
           {l.label}
         </Link>
       ))}
+      <PowerToggle />
     </nav>
   );
 }
