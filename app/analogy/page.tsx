@@ -126,7 +126,7 @@ export default function AnalogyIndexPage() {
                       className="flex items-center justify-between rounded border border-white/15 bg-white/5 px-4 py-3 hover:bg-white/10"
                     >
                       <span>{c.title}</span>
-                      <span className={ok ? "text-xs text-emerald-300" : "text-xs text-white/40"}>
+                      <span className={ok ? "text-xs text-emerald-300" : "text-xs text-white/60"}>
                         {ok ? "Ready" : "Not written"}
                       </span>
                     </Link>

@@ -1,33 +1,41 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import PowerToggle from "@/components/PowerToggle";
+import NavLinks, { LinkList } from "@/components/NavLinks";
 
-const LINKS = [
-  { href: "/", label: "Home" },
-  { href: "/learn", label: "Learn" },
-  { href: "/buddy", label: "Study Buddy" },
-  { href: "/quiz", label: "Quiz" },
-  { href: "/flashcards", label: "Flashcards" },
-  { href: "/games", label: "Games" },
-  { href: "/dashboard", label: "Readiness" },
-  { href: "/diagnose", label: "Find my gaps" },
-  { href: "/planner", label: "Planner" },
-  { href: "/analogy", label: "All analogies" },
-  { href: "/status", label: "Status" },
-];
+const ROW = "flex flex-wrap gap-x-5 gap-y-1";
+const COL = "flex flex-col gap-3";
 
 export default function Nav() {
   return (
-    <nav
-      aria-label="Main"
-      className="flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-white/10 px-6 py-4 text-sm"
-    >
-      <span className="font-semibold">{"Bruno's Mind"}</span>
-      {LINKS.map((l) => (
-        <Link key={l.href} href={l.href} className="text-white/70 hover:text-white">
-          {l.label}
+    <header className="border-b border-white/10">
+      <nav
+        aria-label="Main"
+        className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-6 py-4 text-sm"
+      >
+        <Link href="/" className="font-display text-base font-bold">
+          {"Bruno's Mind"}
         </Link>
-      ))}
-      <PowerToggle />
-    </nav>
+
+        <div className="hidden flex-1 md:block">
+          <Suspense fallback={<LinkList pathname="" className={ROW} />}>
+            <NavLinks className={ROW} />
+          </Suspense>
+        </div>
+
+        <details className="relative ml-auto md:hidden">
+          <summary className="cursor-pointer list-none rounded border border-white/30 px-3 py-1">
+            Menu
+          </summary>
+          <div className="absolute right-0 z-20 mt-2 w-56 rounded border border-white/20 bg-black p-4">
+            <Suspense fallback={<LinkList pathname="" className={COL} />}>
+              <NavLinks className={COL} />
+            </Suspense>
+          </div>
+        </details>
+
+        <PowerToggle />
+      </nav>
+    </header>
   );
 }

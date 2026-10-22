@@ -150,7 +150,7 @@ export default function ConceptTutor({
           </button>
         )}
       </div>
-      <p className="mt-3 text-xs text-white/40">AI can make mistakes. Confirm facts on Microsoft Learn.</p>
+      <p className="mt-3 text-xs text-white/60">AI can make mistakes. Confirm facts on Microsoft Learn.</p>
     </div>
   );
 }

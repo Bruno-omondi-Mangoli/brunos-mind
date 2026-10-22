@@ -216,7 +216,7 @@ export default function PlannerPage() {
 
           <TimelineFragments days={plan.days} />
 
-          <p className="mt-8 text-xs text-white/40">
+          <p className="mt-8 text-xs text-white/60">
             Check the exam length, format and passing score on the{" "}
             <a href={STUDY_GUIDE} target="_blank" rel="noopener noreferrer" className="text-cyan-300 hover:underline">
               official AZ-900 study guide

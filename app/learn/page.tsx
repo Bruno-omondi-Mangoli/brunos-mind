@@ -118,10 +118,10 @@ export default function LearnPage() {
                       className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-white/5"
                     >
                       <span>
-                        <span className="mr-3 font-mono text-xs text-white/40">{i + 1}</span>
+                        <span className="mr-3 font-mono text-xs text-white/60">{i + 1}</span>
                         {c.title}
                       </span>
-                      <span className={p ? "text-xs text-emerald-300" : "text-xs text-white/40"}>
+                      <span className={p ? "text-xs text-emerald-300" : "text-xs text-white/60"}>
                         {p ? `Done${p.max_score ? ` | check ${p.score}/${p.max_score}` : ""}` : "Not started"}
                       </span>
                     </Link>

@@ -443,7 +443,7 @@ export default function QuizPage() {
             </div>
           )}
           {!selectedId && (
-            <p className="mt-4 text-xs text-white/40">Tip: press 1 to 4 to answer.</p>
+            <p className="mt-4 text-xs text-white/60">Tip: press 1 to 4 to answer.</p>
           )}
         </div>
       )}

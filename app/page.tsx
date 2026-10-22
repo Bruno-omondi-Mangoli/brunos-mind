@@ -112,7 +112,7 @@ export default function Home() {
           I did not understand AZ-900 at first. The notes were too abstract. A good analogy in plain language
           would have fixed it, so I built the tool I wish I had.
         </p>
-        <p className="mt-6 text-xs text-white/40">
+        <p className="mt-6 text-xs text-white/60">
           Bruno&apos;s Mind is an unofficial study tool. It is not affiliated with, endorsed by, or sponsored by
           Microsoft. All questions are original.
         </p>

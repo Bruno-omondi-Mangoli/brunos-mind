@@ -103,7 +103,7 @@ export default function DiagnosePage() {
               </article>
             ))}
           </div>
-          <p className="mt-6 text-xs text-white/40">
+          <p className="mt-6 text-xs text-white/60">
             AI generated. Confirm facts on Microsoft Learn before relying on them.
           </p>
         </div>

@@ -245,7 +245,7 @@ export default function BuddyPage() {
           </button>
         )}
       </div>
-      <p className="mt-3 text-xs text-white/40">
+      <p className="mt-3 text-xs text-white/60">
         AI can make mistakes. Confirm facts on Microsoft Learn. Unofficial study tool.
       </p>
     </section>

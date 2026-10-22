@@ -33,7 +33,7 @@ function tone(m: number): string {
   if (m < 0.05) return "148,163,184";
   if (m < 0.4) return "251,113,133";
   if (m < 0.7) return "252,211,77";
-  return "103,232,249";
+  return "120,160,190";
 }
 
 export default function NeuralBackground() {
@@ -173,7 +173,7 @@ export default function NeuralBackground() {
       if (document.hidden || t - last < 33) return;
       last = t;
       if (thinking && t > nextThink) {
-        addPulse(Math.floor(Math.random() * list.length), "103,232,249");
+        addPulse(Math.floor(Math.random() * list.length), "120,160,190");
         nextThink = t + 350;
       }
       draw(t);
@@ -202,7 +202,7 @@ export default function NeuralBackground() {
     <canvas
       ref={ref}
       aria-hidden="true"
-      className="pointer-events-none fixed inset-0 -z-10 h-full w-full opacity-60"
+      className="pointer-events-none fixed inset-0 -z-10 h-full w-full opacity-20"
     />
   );
 }

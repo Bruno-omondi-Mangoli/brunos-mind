@@ -189,7 +189,7 @@ export default function DashboardPage() {
           );
         })}
       </div>
-      <p className="mt-4 text-xs text-white/40">
+      <p className="mt-4 text-xs text-white/60">
         Skill area weights come from the database. VERIFY them against the AZ-900 study guide on Microsoft
         Learn.
       </p>
