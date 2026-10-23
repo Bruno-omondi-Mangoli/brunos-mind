@@ -127,3 +127,11 @@ See [PROMPTS.md](PROMPTS.md) for every prompt, its output format, guardrails and
 ## License
 
 [CHOOSE A LICENSE, for example MIT]
+## How this was built
+
+Bruno's Mind was built in a vibe coding style with an AI pair programmer, directed by a detailed prompt that I wrote before any code existed. The prompt fixed the role, the output style, my Windows and Git Bash workflow, the hackathon rules, the core learning insight (the Analogy Engine) and a six step plan.
+
+- Full prompt, word for word: [docs/BUILD_PROMPT.md](docs/BUILD_PROMPT.md)
+- Documentation of every prompt inside the app: [PROMPTS.md](PROMPTS.md)
+
+How we worked: one slice per reply (folders, full files, install, test step and commit), every slice deployed to the live URL, and real error messages pasted back to get fixes. The AI wrote the code under my direction, and I ran, tested and reviewed it. I made the product decisions: the name, merging three concepts into one, adding games, expanding from 8 questions to a full content pipeline, the guided course, and removing effects that distracted learners.
